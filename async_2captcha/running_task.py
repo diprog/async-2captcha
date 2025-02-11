@@ -1,11 +1,11 @@
 import asyncio
 from typing import TYPE_CHECKING
 
-from async_2captcha.http_session import HTTPSession
 from async_2captcha.models.task import Task
 
 if TYPE_CHECKING:
     from .client import Async2Captcha
+
 
 class RunningTask:
     def __init__(self, client: "Async2Captcha", task_data: dict):
@@ -21,4 +21,18 @@ class RunningTask:
                 pass
             await asyncio.sleep(10)
 
+    async def report_incorrect(self) -> None:
+        """
+        Report to the API that the captcha task result is incorrect.
 
+        :raises TwoCaptchaError: If the API request fails.
+        """
+        await self.client.report_incorrect(self.task.task_id)
+
+    async def report_correct(self) -> None:
+        """
+        Report to the API that the captcha task result is correct.
+
+        :raises TwoCaptchaError: If the API request fails.
+        """
+        await self.client.report_correct(self.task.task_id)

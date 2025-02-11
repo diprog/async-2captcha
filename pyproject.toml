@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "async-2captcha"
-version = "0.1.2"
+version = "0.1.3"
 description = "An asynchronous Python client for the 2Captcha API."
 readme = "README.md"
 requires-python = ">=3.8"

@@ -135,3 +135,21 @@ class Async2Captcha:
         """
         data = await self.session.post("/getTaskResult")
         return float(data["balance"])
+
+    async def report_incorrect(self, task_id: int) -> None:
+        """
+        Report that the captcha task was solved incorrectly.
+
+        :param task_id: The ID of the task to report.
+        :raises TwoCaptchaError: If the API request fails.
+        """
+        await self.session.post("/reportIncorrect", json={"taskId": task_id})
+
+    async def report_correct(self, task_id: int) -> None:
+        """
+        Report that the captcha task was solved correctly.
+
+        :param task_id: The ID of the task to report.
+        :raises TwoCaptchaError: If the API request fails.
+        """
+        await self.session.post("/reportCorrect", json={"taskId": task_id})
