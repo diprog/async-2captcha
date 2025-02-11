@@ -19,3 +19,12 @@ class SolverBase:
         :param client: An instance of Async2Captcha used for making API calls.
         """
         self.client = client
+
+class NotImplementedSolver(SolverBase):
+    """
+    Placeholder solver for captcha types that are not yet implemented.
+    Calling any method on this solver will raise a NotImplementedError.
+    """
+
+    async def create_task(self, *args, **kwargs):
+        raise NotImplementedError("This solver is not implemented yet.")

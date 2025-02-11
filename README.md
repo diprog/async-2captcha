@@ -20,6 +20,9 @@
 - [API Reference](#api-reference)
   - [Async2Captcha Class](#async2captcha-class)
   - [Solvers](#solvers)
+    - [TurnstileSolver](#turnstilesolver)
+    - [CoordinatesSolver](#coordinatessolver)
+    - [Not-Yet-Implemented Solvers](#not-yet-implemented-solvers)
   - [Models](#models)
   - [Error Handling](#error-handling)
 - [Contributing](#contributing)
@@ -199,7 +202,7 @@ asyncio.run(check_balance())
 
 ## API Reference
 
-### **Async2Captcha Class**
+### Async2Captcha Class
 
 Located in [`async_2captcha/client.py`](async_2captcha/client.py), the core class:
 
@@ -217,29 +220,77 @@ Located in [`async_2captcha/client.py`](async_2captcha/client.py), the core clas
   3. `get_balance() -> float`
      - Retrieves account balance.
 
-### **Solvers**
+### Solvers
+
+#### TurnstileSolver
 
 - **TurnstileSolver** (`async_2captcha/solvers/turnstile.py`):
   - `create_task(website_url, website_key, action=None, data=None, pagedata=None, proxy_url=None) -> TurnstileTask`
   - Returns a `TurnstileTask` object with the `solution` containing the Turnstile token.
 
+#### CoordinatesSolver
+
 - **CoordinatesSolver** (`async_2captcha/solvers/coordinates.py`):
   - `create_task(body, comment=None, img_instructions=None, min_clicks=None, max_clicks=None) -> CoordinatesTask`
   - Returns a `CoordinatesTask` object, whose `solution` includes a list of clicked coordinates.
 
-### **Models**
+#### Not-Yet-Implemented Solvers
 
-All Pydantic models are in [`async_2captcha/models`](async_2captcha/models). Notable models:
+The following captcha solvers are currently placeholders (`NotImplementedSolver`). They will raise a `NotImplementedError` if called. Contributions to implement them are welcome.
 
-- **`Task`**:
-  - Represents the generic 2Captcha task response (may be “processing” or “ready”).
-  - Methods: `is_ready()`, `is_processing()`.
-- **`TurnstileTask`**, **`CoordinatesTask`**:
-  - Extend `Task` to include solver-specific `solution` data.
-- **`RunningTask`**:
-  - A utility class to track and wait for a task’s completion.
+**Complex captchas:**
+- reCAPTCHA V2 (Proxyless and proxy-based): `recaptcha_v2`
+- reCAPTCHA V3 (Proxyless and proxy-based): `recaptcha_v3`
+- reCAPTCHA V2 Enterprise (Proxyless and proxy-based): `recaptcha_v2_enterprise`
+- reCAPTCHA V3 Enterprise: `recaptcha_v3_enterprise`
+- Arkose Labs: `arkose_labs`
+- GeeTest: `geetest`
+- Capy Puzzle: `capy_puzzle`
+- Keycaptcha: `keycaptcha`
+- Lemin: `lemin`
+- Amazon CAPTCHA: `amazon_captcha`
+- Cybersiara CAPTCHA: `cybersiara`
+- MtCaptcha: `mt_captcha`
+- CutCaptcha: `cutcaptcha`
+- Friendly CAPTCHA: `friendly_captcha`
+- Datadome CAPTCHA: `datadome_captcha`
+- ATB CAPTCHA: `atb_captcha`
+- Tencent CAPTCHA: `tencent`
+- Prosopo CAPTCHA: `prosopo_procaptcha`
 
-### **Error Handling**
+**Simple captchas:**
+- Normal image-based captchas: `normal_captcha`
+- Text-based captchas: `text_captcha`
+- Rotational captchas: `rotate`
+- Grid-based captchas: `grid`
+- Object-drawing captchas: `draw_around`
+- Bounding box captchas: `bounding_box`
+- Audio captchas: `audio_captcha`
+
+---
+
+### Models
+
+The project uses **Pydantic models** to structure data responses from the 2Captcha API. These models are defined across various files within the `async_2captcha/models/` directory. Notable models include:
+
+- **`Task`** (`models/task.py`):
+  - Represents the response from the 2Captcha API for captcha tasks, including status, solution, or error details.
+  - Methods:
+    - `is_ready()`: Returns `True` if the task is completed and ready.
+    - `is_processing()`: Returns `True` if the task is still being processed.
+
+- **`TurnstileTask`** (`solvers/turnstile.py`):
+  - Inherits from the `Task` model and includes Turnstile-specific solutions such as tokens and user agents.
+
+- **`CoordinatesTask`** (`solvers/coordinates.py`):
+  - Inherits from the `Task` model and includes the list of (x, y) coordinates selected in image-based captchas.
+
+- **Base Models**:
+  - **`CamelCaseModel`** (`models/base.py`): A base model used for converting fields between camelCase (used by 2Captcha) and snake_case (used internally).
+
+These models ensure consistency and validation of API responses. When creating new solvers, you can extend these base models to support specific types of captchas.
+
+### Error Handling
 
 **2Captcha always returns HTTP 200** for successful or failed tasks. Errors are indicated by a non-zero `errorId` in the JSON response, at which point a 2Captcha-specific exception is raised. Example codes include:
 

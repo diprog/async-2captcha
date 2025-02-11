@@ -4,6 +4,7 @@ from .enums import TaskType
 from .http_session import HTTPSession
 from .models.task import Task
 from .running_task import RunningTask
+from .solvers.base import NotImplementedSolver
 from .solvers.coordinates import CoordinatesSolver
 from .solvers.turnstile import TurnstileSolver
 
@@ -52,6 +53,35 @@ class Async2Captcha:
 
         #: A solver for image-based captchas requiring clicks on specific coordinates.
         self.coordinates: CoordinatesSolver = CoordinatesSolver(self)
+
+        # Interactive captchas
+        self.recaptcha_v2 = NotImplementedSolver(self)
+        self.recaptcha_v3 = NotImplementedSolver(self)
+        self.recaptcha_v2_enterprise = NotImplementedSolver(self)
+        self.recaptcha_v3_enterprise = NotImplementedSolver(self)
+        self.arkose_labs = NotImplementedSolver(self)
+        self.geetest = NotImplementedSolver(self)
+        self.capy_puzzle = NotImplementedSolver(self)
+        self.keycaptcha = NotImplementedSolver(self)
+        self.lemin = NotImplementedSolver(self)
+        self.amazon_captcha = NotImplementedSolver(self)
+        self.cybersiara = NotImplementedSolver(self)
+        self.mt_captcha = NotImplementedSolver(self)
+        self.cutcaptcha = NotImplementedSolver(self)
+        self.friendly_captcha = NotImplementedSolver(self)
+        self.datadome_captcha = NotImplementedSolver(self)
+        self.atb_captcha = NotImplementedSolver(self)
+        self.tencent = NotImplementedSolver(self)
+        self.prosopo_procaptcha = NotImplementedSolver(self)
+
+        # Simple captchas
+        self.normal_captcha = NotImplementedSolver(self)
+        self.text_captcha = NotImplementedSolver(self)
+        self.rotate = NotImplementedSolver(self)
+        self.grid = NotImplementedSolver(self)
+        self.draw_around = NotImplementedSolver(self)
+        self.bounding_box = NotImplementedSolver(self)
+        self.audio_captcha = NotImplementedSolver(self)
 
     async def create_task(self, type: TaskType, payload: Dict[str, Any]) -> RunningTask:
         """
