@@ -44,42 +44,80 @@ class CoordinatesTask(Task):
     )
 
 
+from typing import Optional, Union
+from pathlib import Path
+import base64
+
 class CoordinatesSolver(SolverBase):
     """
     Asynchronous solver for image-based captchas that require clicking specific
-    coordinates (e.g., 'click the apples' or custom slider captchas).
+    coordinates (e.g., "click the apples" or custom slider captchas).
 
-    This solver uses the 2Captcha 'CoordinatesTask' method, where you provide
-    a base64-encoded image and optional instructions (comments, min/max clicks, etc.).
+    This solver uses the 2Captcha 'CoordinatesTask' method, where you provide a
+    Base64-encoded image along with optional instructions (comments, min/max clicks, etc.).
     """
 
-    async def create_task(
+    @staticmethod
+    def _prepare_captcha_image(captcha_image: Union[str, Path, bytes]) -> str:
+        """
+        Converts the provided captcha image into a Base64-encoded string,
+        which is required for the 'body' field in the 2Captcha API.
+
+        Supported types:
+          - bytes: raw image bytes.
+          - Path: a pathlib.Path object pointing to an image file.
+          - str: either a file path, a Base64-encoded string, or a Data-URI.
+
+        :param captcha_image: The captcha image as a file path, bytes, or Base64/Data-URI string.
+        :return: A Base64-encoded string representation of the image.
+        :raises ValueError: If the provided captcha_image type is not supported.
+        """
+        if isinstance(captcha_image, bytes):
+            return base64.b64encode(captcha_image).decode('utf-8')
+        elif isinstance(captcha_image, Path):
+            with captcha_image.open("rb") as f:
+                data = f.read()
+            return base64.b64encode(data).decode('utf-8')
+        elif isinstance(captcha_image, str):
+            potential_path = Path(captcha_image)
+            if potential_path.exists():
+                with potential_path.open("rb") as f:
+                    data = f.read()
+                return base64.b64encode(data).decode('utf-8')
+            if captcha_image.startswith("data:"):
+                return captcha_image
+            return captcha_image
+        else:
+            raise ValueError("Unsupported captcha_image type. Provide a str, Path, or bytes.")
+
+    async def solve_captcha(
         self,
-        body: str,
+        captcha_image: Union[str, Path, bytes],
         comment: Optional[str] = None,
         img_instructions: Optional[str] = None,
         min_clicks: Optional[int] = None,
         max_clicks: Optional[int] = None
     ) -> CoordinatesTask:
         """
-        Create a new CoordinatesTask and wait for its completion.
+        Submits a new CoordinatesTask to 2Captcha and waits for its completion.
 
         **Usage**:
-        - Convert your image to Base64 or Data-URI format.
-        - Supply it as the 'body' parameter.
-        - Optionally provide a 'comment' or 'img_instructions' to guide the solver.
-        - You can also specify 'min_clicks' and 'max_clicks' if the captcha
-          requires a specific number of clicks.
+          - Provide your captcha image as a file path, bytes, or a Base64/Data-URI string.
+            If a file path or bytes are provided, they will be automatically converted.
+          - Optionally, include a 'comment' or 'img_instructions' to guide the solver.
+          - You may also specify 'min_clicks' and 'max_clicks' if the captcha requires a specific number of clicks.
 
-        :param body: Base64-encoded image or Data-URI string.
+        :param captcha_image: The captcha image as a file path, bytes, or Base64/Data-URI string.
         :param comment: (Optional) A text comment to help workers solve the captcha.
         :param img_instructions: (Optional) An additional instruction image (Base64).
         :param min_clicks: (Optional) The minimum number of clicks required.
         :param max_clicks: (Optional) The maximum number of clicks allowed.
         :return: A CoordinatesTask instance containing status, error info, and solution data.
-        :raises TwoCaptchaError: If an error occurs (e.g., invalid key, zero balance, unsolvable).
+        :raises TwoCaptchaError: If an error occurs (e.g., invalid key, zero balance, unsolvable captcha).
         """
-        # Prepare payload for 2Captcha /createTask
+        # Convert the provided captcha image to the required Base64 format
+        body = self._prepare_captcha_image(captcha_image)
+
         payload = {
             "body": body,
         }
@@ -92,9 +130,8 @@ class CoordinatesSolver(SolverBase):
         if max_clicks is not None:
             payload["maxClicks"] = max_clicks
 
-        # Create the CoordinatesTask on 2Captcha (no proxy support specified by docs).
         task = await self.client.create_task(TaskType.COORDINATES, payload=payload)
         completed_task = await task.wait_until_completed()
 
-        # Convert the final response into a CoordinatesTask model
         return CoordinatesTask(**completed_task.model_dump())
+
