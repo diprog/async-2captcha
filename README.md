@@ -35,8 +35,10 @@
   - Coordinate-based image captchas (e.g., “click all apples”)
   - (More solver classes can be added or contributed)
 - **Exception Handling**:
-  - Raises HTTP errors (`4xx` / `5xx`) with meaningful exceptions.
+  - Raises HTTP errors (`4xx` / `5xx`) if the server’s status code is >= 400.
   - Raises 2Captcha-specific errors (e.g., `ERROR_NO_SLOT_AVAILABLE`, `ERROR_ZERO_BALANCE`, etc.) with clear messages.
+- **HTTP/2 Support**:
+  - For potentially improved performance, you can enable HTTP/2 by installing `httpx[http2]` and passing `http2=True` when creating the `Async2Captcha` client.
 - **Convenient**: Automatically includes your 2Captcha API key in each request and provides high-level methods like `get_balance()`.
 
 ---
@@ -47,6 +49,11 @@ Requires **Python 3.8+**.
 
 ```bash
 pip install async-2captcha
+```
+
+If you want **HTTP/2** support (optional), install:
+```bash
+pip install httpx[http2]
 ```
 
 ---
@@ -67,7 +74,8 @@ from async_2captcha.client import Async2Captcha
 
 async def main():
     api_key = "YOUR_2CAPTCHA_API_KEY"
-    captcha_client = Async2Captcha(api_key)
+    # Pass http2=True if you installed httpx[http2] and want to enable HTTP/2
+    captcha_client = Async2Captcha(api_key, http2=True)
 
     balance = await captcha_client.get_balance()
     print(f"Your 2Captcha balance is: ${balance:.2f}")
@@ -168,8 +176,6 @@ async def create_and_poll_task():
     if task_result.is_ready():
         print("Task is solved!", task_result.solution)
     else:
-        # You can also manually check or poll the task status:
-        # status_task = await client.get_task_result(running_task.task.task_id)
         print("Task is still processing...")
 
 asyncio.run(create_and_poll_task())
@@ -199,6 +205,7 @@ Located in [`async_2captcha/client.py`](async_2captcha/client.py), the core clas
 
 - **Parameters**:
   - `api_key` (str): 2Captcha API key.
+  - `http2` (bool, optional): If `True`, enables HTTP/2 (requires `pip install httpx[http2]`).
 - **Attributes**:
   - `turnstile`: A `TurnstileSolver` instance.
   - `coordinates`: A `CoordinatesSolver` instance.
@@ -234,13 +241,15 @@ All Pydantic models are in [`async_2captcha/models`](async_2captcha/models). Not
 
 ### **Error Handling**
 
-**HTTP errors** are raised if the server returns non-2xx responses:
-- e.g., `BadRequest(400)`, `Unauthorized(401)`, `TooManyRequests(429)`, etc.
+**2Captcha always returns HTTP 200** for successful or failed tasks. Errors are indicated by a non-zero `errorId` in the JSON response, at which point a 2Captcha-specific exception is raised. Example codes include:
 
-**2Captcha-specific errors** are raised if the response contains a non-zero `errorId`:
-- e.g., `ErrorNoSlotAvailable(2)`, `ErrorZeroBalance(10)`, `ErrorTaskNotSupported(23)`, etc.
+- `ERROR_NO_SLOT_AVAILABLE` (`errorId=2`)
+- `ERROR_ZERO_BALANCE` (`errorId=10`)
+- `ERROR_CAPTCHA_UNSOLVABLE` (`errorId=12`)
+- … and more.
 
-Use Python’s `try/except` blocks to catch and handle them as needed:
+Additionally, **HTTP errors** (e.g., if 2Captcha.com is unreachable or returns `4xx/5xx`) are raised as `HTTPError` subclasses. Here’s how to handle them:
+
 ```python
 import asyncio
 from async_2captcha.client import Async2Captcha
@@ -249,7 +258,7 @@ from async_2captcha.errors.client_errors import TwoCaptchaError
 
 async def example():
     try:
-        client = Async2Captcha("API_KEY")
+        client = Async2Captcha("API_KEY", http2=True)
         balance = await client.get_balance()
         print("Balance:", balance)
     except HTTPError as http_err:
