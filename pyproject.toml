@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "async-2captcha"
-version = "0.1.0"
+version = "0.1.1"
 description = "An asynchronous Python client for the 2Captcha API."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -31,3 +31,9 @@ dependencies = [
     "pydantic>=2.10.6",
     "httpx>=0.28.1"
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/diprog/async-2captcha"
+"Telegram" = "https://t.me/groowo"
+"Repository" = "https://github.com/diprog/async-2captcha"
+"Issue Tracker" = "https://github.com/diprog/async-2captcha/issues"

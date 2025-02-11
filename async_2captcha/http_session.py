@@ -17,13 +17,25 @@ class HTTPSession:
 
     .. note::
        The 2captcha API exclusively uses POST requests.
+
+    .. note::
+       This class supports HTTP/2 by passing the ``http2=True`` parameter during initialization.
+       To use HTTP/2, install the optional dependencies using:
+
+       ```
+       pip install httpx[http2]
+       ```
+
+    Attributes:
+        base_url (Optional[str]): The base URL used to construct POST request URLs.
+        default_json (Optional[dict]): Default JSON payload to include in each request.
+        http2 (Optional[bool]): If ``True``, enables HTTP/2 for all requests.
     """
 
-    def __init__(
-        self,
-        base_url: Optional[str] = None,
-        default_json: Optional[dict] = None
-    ) -> None:
+    def __init__(self,
+                 base_url: Optional[str] = None,
+                 default_json: Optional[dict] = None,
+                 http2: Optional[bool] = None) -> None:
         """
         Initialize an :class:`HTTPSession`.
 
@@ -37,10 +49,18 @@ class HTTPSession:
             If additional JSON is passed to :meth:`post`, the two dictionaries
             are combined with the values in ``default_json`` taking precedence
             in case of key conflicts.
+
+        :param http2:
+            If ``True``, enables HTTP/2 for all requests. To use this feature, make sure
+            to install the required dependencies via:
+
+            ```
+            pip install httpx[http2]
+            ```
         """
         self.base_url = base_url
         self.default_json = default_json
-        self._client = httpx.AsyncClient()
+        self._client = httpx.AsyncClient(http2=http2)
 
     async def post(self, url_or_path: str, json: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
