@@ -16,6 +16,7 @@ class RunningTask:
         while True:
             task = await self.client.get_task_result(self.task.task_id)
             if task.is_ready():
+                task.task_id = self.task.task_id
                 return task
             elif task.is_processing():
                 pass
