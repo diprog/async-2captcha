@@ -80,11 +80,13 @@ class CoordinatesSolver(SolverBase):
             return base64.b64encode(data).decode('utf-8')
         elif isinstance(captcha_image, str):
             potential_path = Path(captcha_image)
-            if potential_path.exists():
-                with potential_path.open("rb") as f:
-                    data = f.read()
-            else:
-                return captcha_image
+            try:
+                if potential_path.exists():
+                    with potential_path.open("rb") as f:
+                        data = f.read()
+                    return base64.b64encode(data).decode('utf-8')
+            except OSError:
+                pass
             if captcha_image.startswith("data:"):
                 return captcha_image
             return captcha_image
