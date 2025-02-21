@@ -90,7 +90,7 @@ class CoordinatesSolver(SolverBase):
         else:
             raise ValueError("Unsupported captcha_image type. Provide a str, Path, or bytes.")
 
-    async def solve_captcha(
+    async def create_task(
         self,
         captcha_image: Union[str, Path, bytes],
         comment: Optional[str] = None,
