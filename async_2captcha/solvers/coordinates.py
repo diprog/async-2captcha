@@ -83,7 +83,8 @@ class CoordinatesSolver(SolverBase):
             if potential_path.exists():
                 with potential_path.open("rb") as f:
                     data = f.read()
-                return base64.b64encode(data).decode('utf-8')
+            else:
+                return captcha_image
             if captcha_image.startswith("data:"):
                 return captcha_image
             return captcha_image
